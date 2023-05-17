@@ -22,3 +22,7 @@ Run `terraform fmt`
 1. Login to AWS console
 2. IAM dashboard -> Users -> Select user
 3. In user detail page -> Security credentials -> Access keys
+
+## Documents
+1. https://registry.terraform.io/providers/hashicorp/aws/latest/docs
+2. https://www.terraform.io/
