@@ -6,7 +6,7 @@ https://developer.hashicorp.com/terraform/tutorials/aws-get-started/install-cli
 ## How to init project
 Run `terraform init` in root folder
 
-## How to review the state before appling changes
+## How to review the state before applying changes
 Run `terraform plan -out plan.tfplan`
 
 ## How to apply changes
