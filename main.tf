@@ -65,5 +65,4 @@ module "ec2" {
   vpc_security_group_ids = [module.security_group.default_sg_id]
   environment_tag        = local.environment_tag
   should_create_ec2      = local.ec2.should_create
-  xyz = "AAA"
 }
