@@ -22,6 +22,11 @@ variable "vpc_security_group_ids" {
     type = list(string)
 }
 
+variable "should_create_ec2" {
+    description = "To determine whther to create ec2 instance"
+    type = bool
+}
+
 variable "environment_tag" {
   description = "Environment Tag"
   default     = "Dev"
