@@ -14,20 +14,10 @@ provider "aws" {
   secret_key = var.aws_secret_key
 }
 
-# Create S3 Bucket
-# module "aws-s3" {
-#   source = "./modules/aws-s3"
-
-#   bucket_name = "chbr-s3-playground-hk"
-
-#   tags = {
-#     Terraform   = "true"
-#     Environment = "dev"
-#   }
-# }
-
 locals {
   allow_all_access_block = "0.0.0.0/0"
+
+  cidr_vpc = "10.1.0.0/16"
 
   public_cidr_blocks = [
     "10.1.0.0/24",
@@ -43,133 +33,72 @@ locals {
     "ap-east-1a",
     "ap-east-1b",
   ]
-}
 
-# VPC
-resource "aws_vpc" "main" {
-  cidr_block           = var.cidr_vpc
-  enable_dns_support   = true
-  enable_dns_hostnames = true
-  tags = {
-    Name        = "Main VPC"
-    Environment = "${var.environment_tag}"
+  environment_tag = "Dev"
+
+  ec2 = {
+    public_key_path = "~/.ssh/id_rsa.pub"
+    instance_ami    = "ami-0818314d9ae02af81"
+    instance_type   = "t3.micro"
   }
 }
 
-# Subnet
-resource "aws_subnet" "public" {
-  count                   = length(local.public_cidr_blocks)
-  vpc_id                  = aws_vpc.main.id
-  cidr_block              = local.public_cidr_blocks[count.index]
-  availability_zone       = local.availability_zones[count.index]
-  map_public_ip_on_launch = "true"
+# Create S3 Bucket
+# module "aws-s3" {
+#   source = "./modules/aws-s3"
 
-  tags = {
-    Name        = "Public Subnet"
-    Environment = "${var.environment_tag}"
-  }
-}
+#   bucket_name = "chbr-s3-playground-hk"
 
-resource "aws_subnet" "private" {
-  count             = length(local.private_cidr_blocks)
-  vpc_id            = aws_vpc.main.id
-  cidr_block        = local.private_cidr_blocks[count.index]
-  availability_zone = local.availability_zones[count.index]
-
-  tags = {
-    Name        = "Private Subnet"
-    Environment = "${var.environment_tag}"
-  }
-}
-
-# Internet Gateway
-resource "aws_internet_gateway" "gw" {
-  vpc_id = aws_vpc.main.id
-
-  tags = {
-    Name        = "Main VPC"
-    Environment = "${var.environment_tag}"
-  }
-}
-
-# Route Table
-resource "aws_route_table" "rtb_public" {
-  vpc_id = aws_vpc.main.id
-  route {
-    cidr_block = local.allow_all_access_block
-    gateway_id = aws_internet_gateway.gw.id
-  }
-  tags = {
-    Environment = var.environment_tag
-  }
-}
-
-resource "aws_route_table_association" "rta_subnet_public" {
-  count          = length(local.public_cidr_blocks)
-  subnet_id      = aws_subnet.public[count.index].id
-  route_table_id = aws_route_table.rtb_public.id
-}
-
-resource "aws_route_table" "rtb_private" {
-  vpc_id = aws_vpc.main.id
-  route  = []
-  tags = {
-    Environment = var.environment_tag
-  }
-}
-
-resource "aws_route_table_association" "rta_subnet_private" {
-  count          = length(local.private_cidr_blocks)
-  subnet_id      = aws_subnet.private[count.index].id
-  route_table_id = aws_route_table.rtb_private.id
-}
-
-# Security group
-resource "aws_security_group" "default_sg" {
-  name   = "default_sg"
-  vpc_id = aws_vpc.main.id
-  ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-  ingress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-  ingress {
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-  tags = {
-    Environment = var.environment_tag
-  }
-}
-
-resource "aws_key_pair" "ec2key" {
-  key_name   = "publicKey"
-  public_key = file(var.public_key_path)
-}
-
-# Create EC 2 instance
-# resource "aws_instance" "test_instance" {
-#   ami                    = var.instance_ami
-#   instance_type          = var.instance_type
-#   subnet_id              = aws_subnet.public[0].id
-#   vpc_security_group_ids = ["${aws_security_group.default_sg.id}"]
-#   key_name               = aws_key_pair.ec2key.key_name
 #   tags = {
-#     Environment = "${var.environment_tag}"
+#     Terraform   = "true"
+#     Environment = "dev"
 #   }
+# }
+
+module "vpc" {
+  source              = "./modules/vpc"
+  cidr_vpc            = local.cidr_vpc
+  environment_tag     = local.environment_tag
+  public_cidr_blocks  = local.public_cidr_blocks
+  private_cidr_blocks = local.private_cidr_blocks
+  availability_zones  = local.availability_zones
+}
+
+module "security_group" {
+  source            = "./modules/security-group"
+  default_sg_vpc_id = module.vpc.main_vpc_id
+  environment_tag   = local.environment_tag
+}
+
+module "ec2" {
+  source                 = "./modules/ec2"
+  public_key_path        = local.ec2.public_key_path
+  instance_ami           = local.ec2.instance_ami
+  instance_type          = local.ec2.instance_type
+  subnet_id              = module.vpc.public_subnet_ids[0]
+  vpc_security_group_ids = [module.security_group.default_sg_id]
+  environment_tag        = local.environment_tag
+}
+
+# variable "public_key_path" {
+#   description = "Public key path"
+#   default     = "~/.ssh/id_rsa.pub"
+# }
+
+# variable "instance_ami" {
+#   description = "AMI for aws EC2 instance"
+#   default     = "ami-0818314d9ae02af81"
+# }
+
+# variable "instance_type" {
+#   description = "type for aws EC2 instance"
+#   default     = "t3.micro"
+# }
+
+# variable "subnet_id" {
+#     description = "EC2 subnet Id"
+# }
+
+# variable "vpc_security_group_ids" {
+#     type = list(string)
 # }
