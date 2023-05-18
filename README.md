@@ -1,3 +1,9 @@
+## Project Setup
+1. Install Terraform
+2. Install pre-commit
+3. Run `terraform init`
+4. Run `pre-commit install`
+
 ## How to install Terraform
 1. Run `brew tap hashicorp/tap`
 2. Run `brew install hashicorp/tap/terraform`
@@ -17,6 +23,12 @@ Run `terraform validate`
 
 ## How to format
 Run `terraform fmt`
+
+## How to install pre-commit
+Run `brew install pre-commit`
+
+## How to run hooks manually
+Run `pre-commit run -a`
 
 ## Where to check AWS access and secret key?
 1. Login to AWS console
