@@ -4,7 +4,7 @@ output "main_vpc_id" {
 }
 
 output "public_subnet_ids" {
-  description = "ID of public subnets"  
+  description = "ID of public subnets"
   value       = aws_subnet.public[*].id
 }
 
