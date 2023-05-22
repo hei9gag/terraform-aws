@@ -12,6 +12,7 @@ locals {
     allow_all_access_block = "0.0.0.0/0"
 }
 
+
 # VPC
 resource "aws_vpc" "main" {
   cidr_block           = var.cidr_vpc
@@ -25,7 +26,7 @@ resource "aws_vpc" "main" {
 
 # Subnet
 resource "aws_subnet" "public" {
-  count                   = length(var.public_cidr_blocks)
+  count                   = length(var.availability_zones)
   vpc_id                  = aws_vpc.main.id
   cidr_block              = var.public_cidr_blocks[count.index]
   availability_zone       = var.availability_zones[count.index]
@@ -38,7 +39,7 @@ resource "aws_subnet" "public" {
 }
 
 resource "aws_subnet" "private" {
-  count             = length(var.private_cidr_blocks)
+  count             = length(var.availability_zones)
   vpc_id            = aws_vpc.main.id
   cidr_block        = var.private_cidr_blocks[count.index]
   availability_zone = var.availability_zones[count.index]
