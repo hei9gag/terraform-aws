@@ -13,3 +13,8 @@ variable "aws_secret_key" {
   description = "AWS secret key"
   type        = string
 }
+
+variable "environment_tag" {
+  type    = string
+  default = "Dev"
+}
