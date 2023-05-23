@@ -1,16 +1,7 @@
-terraform {
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 4.0"
-    }
-  }
-  required_version = ">= 1.2.0"
-}
 
-resource "aws_security_group" "default_sg" {
+resource "aws_security_group" "http_sg" {
   name   = "default_sg"
-  vpc_id = var.default_sg_vpc_id
+  vpc_id = module.vpc.vpc_id
   ingress {
     from_port   = 22
     to_port     = 22
@@ -34,8 +25,5 @@ resource "aws_security_group" "default_sg" {
     to_port     = 0
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
-  }
-  tags = {
-    Environment = var.environment_tag
   }
 }
