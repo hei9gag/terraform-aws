@@ -16,5 +16,5 @@ variable "aws_secret_key" {
 
 variable "environment_tag" {
   type    = string
-  default = "Dev"
+  default = "Stg"
 }
