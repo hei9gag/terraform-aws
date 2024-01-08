@@ -2,17 +2,17 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 4.0"
+      version = "~> 5.31.0"
     }
   }
   required_version = ">= 1.2.0"
 }
 
-
 resource "aws_key_pair" "ec2key" {
   key_name   = "publicKey"
   public_key = file(var.public_key_path)
 }
+
 
 # Create EC 2 instance
 resource "aws_instance" "playground" {
@@ -25,4 +25,10 @@ resource "aws_instance" "playground" {
   tags = {
     Environment = var.environment_tag
   }
+}
+
+resource "aws_eip" "lb" {  
+  count = var.should_create_ec2 ? 1 : 0
+  instance = aws_instance.playground[0].id
+  domain   = "vpc"
 }
