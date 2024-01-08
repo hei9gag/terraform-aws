@@ -21,14 +21,14 @@ locals {
     public_key_path = "~/.ssh/id_rsa.pub"
     instance_ami    = "ami-0818314d9ae02af81"
     instance_type   = "t3.micro"
-    should_create   = false # Update the value to true to create / update ec 2 instance
+    should_create   = true # Update the value to true to create / update ec 2 instance
   }
 }
 
 
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
-  version = "3.19.0"
+  version = "5.4.0"
 
   name = "main-vpc"
 
@@ -53,13 +53,13 @@ module "vpc" {
   }
 }
 
-# module "ec2" {
-#   source                 = "./modules/ec2"
-#   public_key_path        = local.ec2.public_key_path
-#   instance_ami           = local.ec2.instance_ami
-#   instance_type          = local.ec2.instance_type
-#   subnet_id              = module.vpc.public_subnet_ids[0]
-#   vpc_security_group_ids = [module.security_group.default_sg_id]
-#   environment_tag        = local.environment_tag
-#   should_create_ec2      = local.ec2.should_create
-# }
+module "ec2" {
+  source                 = "./modules/ec2"
+  public_key_path        = local.ec2.public_key_path
+  instance_ami           = local.ec2.instance_ami
+  instance_type          = local.ec2.instance_type
+  subnet_id              = module.vpc.public_subnets[0]
+  vpc_security_group_ids = [aws_security_group.http_sg.id]
+  environment_tag        = var.environment_tag
+  should_create_ec2      = local.ec2.should_create
+}
